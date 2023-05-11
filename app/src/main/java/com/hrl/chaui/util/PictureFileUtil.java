@@ -7,7 +7,7 @@ import com.hrl.chaui.R;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
-import com.nbsp.materialfilepicker.MaterialFilePicker;
+//import com.nbsp.materialfilepicker.MaterialFilePicker;
 
 /**
  * TODO
@@ -121,12 +121,12 @@ public class PictureFileUtil {
 
 
     public static void openFile(Activity mContext,int requestCode) {
-        new MaterialFilePicker()
-                .withActivity(mContext)
-                .withRequestCode(requestCode)
-                //       .withFilter(Pattern.compile(".*\\.txt$")) // Filtering files and directories by file name using regexp
-                .withFilterDirectories(true) // Set directories filterable (false by default)
-                .withHiddenFiles(true) // Show hidden files and folders
-                .start();
+//        new MaterialFilePicker()
+//                .withActivity(mContext)
+//                .withRequestCode(requestCode)
+//                //       .withFilter(Pattern.compile(".*\\.txt$")) // Filtering files and directories by file name using regexp
+//                .withFilterDirectories(true) // Set directories filterable (false by default)
+//                .withHiddenFiles(true) // Show hidden files and folders
+//                .start();
     }
 }

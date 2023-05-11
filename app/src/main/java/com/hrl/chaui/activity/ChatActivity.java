@@ -41,7 +41,7 @@ import com.hrl.chaui.widget.RecordButton;
 import com.hrl.chaui.widget.StateButton;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.entity.LocalMedia;
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+//import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -269,7 +269,8 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE_FILE:
-                    String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+//                    String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+                    String filePath = "";
                     LogUtil.d("获取到的文件路径:"+filePath);
                     sendFileMessage(mSenderId, mTargetId, filePath);
                     break;
