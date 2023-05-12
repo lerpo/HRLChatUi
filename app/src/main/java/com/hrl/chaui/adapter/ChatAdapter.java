@@ -52,9 +52,6 @@ public class ChatAdapter extends BaseQuickAdapter<Message,BaseViewHolder> {
     private static final int RECEIVE_LOCATION = R.layout.item_location_receive;*/
 
 
-
-
-
     public ChatAdapter(Context context, List<Message> data) {
         super(data);
         setMultiTypeDelegate(new MultiTypeDelegate<Message>() {
@@ -127,8 +124,6 @@ public class ChatAdapter extends BaseQuickAdapter<Message,BaseViewHolder> {
 
             }
         }
-
-
     }
 
         private void setContent(BaseViewHolder helper, Message item) {

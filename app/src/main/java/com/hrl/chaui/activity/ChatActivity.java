@@ -54,6 +54,8 @@ import butterknife.OnClick;
 
 public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
+    @BindView(R.id.common_toolbar_back)
+    RelativeLayout btnBack;
     @BindView(R.id.llContent)
     LinearLayout mLlContent;
     @BindView(R.id.rv_chat_list)
@@ -94,7 +96,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
 
-    private    ImageView  ivAudio;
+    private ImageView ivAudio;
 
     protected void initContent() {
         ButterKnife.bind(this) ;
@@ -143,40 +145,45 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         });
 
+        List<Message>  mReceiveMsgList=new ArrayList<Message>();
+        Message mMessgaeText=getBaseReceiveMessage(MsgType.TEXT);
+        TextMsgBody mTextMsgBody=new TextMsgBody();
+        mTextMsgBody.setMessage("你想要啥绝活,快跟我聊聊吧！！！");
+        mMessgaeText.setBody(mTextMsgBody);
+        mReceiveMsgList.add(mMessgaeText);
+        mAdapter.addData(0,mReceiveMsgList);
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
      }
-
-
-
-
-
-
-
-
-
     @Override
     public void onRefresh() {
           //下拉刷新模拟获取历史消息
-          List<Message>  mReceiveMsgList=new ArrayList<Message>();
-          //构建文本消息
-          Message mMessgaeText=getBaseReceiveMessage(MsgType.TEXT);
-          TextMsgBody mTextMsgBody=new TextMsgBody();
-          mTextMsgBody.setMessage("收到的消息");
-          mMessgaeText.setBody(mTextMsgBody);
-          mReceiveMsgList.add(mMessgaeText);
-          //构建图片消息
-          Message mMessgaeImage=getBaseReceiveMessage(MsgType.IMAGE);
-          ImageMsgBody mImageMsgBody=new ImageMsgBody();
-          mImageMsgBody.setThumbUrl("https://c-ssl.duitang.com/uploads/item/201208/30/20120830173930_PBfJE.thumb.700_0.jpeg");
-          mMessgaeImage.setBody(mImageMsgBody);
-          mReceiveMsgList.add(mMessgaeImage);
-          //构建文件消息
-          Message mMessgaeFile=getBaseReceiveMessage(MsgType.FILE);
-          FileMsgBody mFileMsgBody=new FileMsgBody();
-          mFileMsgBody.setDisplayName("收到的文件");
-          mFileMsgBody.setSize(12);
-          mMessgaeFile.setBody(mFileMsgBody);
-          mReceiveMsgList.add(mMessgaeFile);
-          mAdapter.addData(0,mReceiveMsgList);
+//          List<Message>  mReceiveMsgList=new ArrayList<Message>();
+//          //构建文本消息
+//          Message mMessgaeText=getBaseReceiveMessage(MsgType.TEXT);
+//          TextMsgBody mTextMsgBody=new TextMsgBody();
+//          mTextMsgBody.setMessage("你想要啥绝活,快跟我聊聊吧！！！");
+//          mMessgaeText.setBody(mTextMsgBody);
+//          mReceiveMsgList.add(mMessgaeText);
+//          //构建图片消息
+//          Message mMessgaeImage=getBaseReceiveMessage(MsgType.IMAGE);
+//          ImageMsgBody mImageMsgBody=new ImageMsgBody();
+//          mImageMsgBody.setThumbUrl("https://c-ssl.duitang.com/uploads/item/201208/30/20120830173930_PBfJE.thumb.700_0.jpeg");
+//          mMessgaeImage.setBody(mImageMsgBody);
+//          mReceiveMsgList.add(mMessgaeImage);
+//          //构建文件消息
+//          Message mMessgaeFile=getBaseReceiveMessage(MsgType.FILE);
+//          FileMsgBody mFileMsgBody=new FileMsgBody();
+//          mFileMsgBody.setDisplayName("收到的文件");
+//          mFileMsgBody.setSize(12);
+//          mMessgaeFile.setBody(mFileMsgBody);
+//          mReceiveMsgList.add(mMessgaeFile);
+//          mAdapter.addData(0,mReceiveMsgList);
           mSwipeRefresh.setRefreshing(false);
     }
 
@@ -260,9 +267,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
 
-
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -294,9 +298,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
     }
 
-
-
-
     //文本消息
     private void sendTextMsg(String hello)  {
         final Message mMessgae=getBaseSendMessage(MsgType.TEXT);
@@ -305,7 +306,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
         mMessgae.setBody(mTextMsgBody);
         //开始发送
         mAdapter.addData( mMessgae);
-        //模拟两秒后发送成功
         updateMsg(mMessgae);
     }
 

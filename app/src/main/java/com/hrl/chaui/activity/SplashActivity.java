@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-
 import com.hrl.chaui.R;
 import com.hrl.chaui.util.LogUtil;
 import com.hrl.chaui.widget.SetPermissionDialog;
@@ -25,7 +24,7 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 requestPermisson();
             }
-        }, 100);
+        }, 1000);
         LogUtil.d(new String(Character.toChars(0x1F60E)));
     }
 
@@ -43,7 +42,7 @@ public class SplashActivity extends AppCompatActivity {
                     @Override
                     public void accept(Boolean aBoolean) throws Exception {
                         if (aBoolean) {
-                            startActivity(new Intent(SplashActivity.this,ChatActivity.class));
+                            startActivity(new Intent(SplashActivity.this,MainActivity.class));
                             finish();
                          } else {
 
