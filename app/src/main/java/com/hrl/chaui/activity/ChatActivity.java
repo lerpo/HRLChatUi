@@ -41,9 +41,16 @@ import com.hrl.chaui.widget.RecordButton;
 import com.hrl.chaui.widget.StateButton;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.entity.LocalMedia;
+import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizer;
+import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizerListener;
+import com.tencent.cloud.qcloudasrsdk.onesentence.common.QCloudSourceType;
+import com.tencent.cloud.qcloudasrsdk.onesentence.network.QCloudOneSentenceRecognitionParams;
 //import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +59,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
-public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, QCloudOneSentenceRecognizerListener {
 
     @BindView(R.id.common_toolbar_back)
     RelativeLayout btnBack;
@@ -86,7 +93,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
      public static final int       REQUEST_CODE_IMAGE=0000;
      public static final int       REQUEST_CODE_VEDIO=1111;
      public static final int       REQUEST_CODE_FILE=2222;
-
+    private QCloudOneSentenceRecognizer recognizer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -158,8 +165,10 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                 finish();
             }
         });
-
-     }
+        if(recognizer == null) {
+            recognizer = new QCloudOneSentenceRecognizer(this,"1303035412","AKIDlYL6h4Ed3KM9g0FRQAfxELCzmR0khUq3","5zkMqCPUOApLpJgr494tYDj2GI8rPmzD");
+        }
+    }
     @Override
     public void onRefresh() {
           //下拉刷新模拟获取历史消息
@@ -238,10 +247,66 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                 LogUtil.d("录音结束回调");
                  File file = new File(audioPath);
                  if (file.exists()) {
-                    sendAudioMessage(audioPath,time);
+//                    sendAudioMessage(audioPath,time);
+
+                     try {
+                         FileInputStream fis = new FileInputStream(file);
+                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                         byte[] buf = new byte[1024];
+
+                         try {
+                             for (int readNum; (readNum = fis.read(buf)) != -1;) {
+                                 bos.write(buf, 0, readNum);
+                             }
+                         } catch (IOException ex) {
+                             ex.printStackTrace();
+                         }
+
+                         byte[] bytes = bos.toByteArray();
+                         //配置识别参数,详细参数说明见： https://cloud.tencent.com/document/product/1093/35646
+                         QCloudOneSentenceRecognitionParams params = (QCloudOneSentenceRecognitionParams)QCloudOneSentenceRecognitionParams.defaultRequestParams();
+                         params.setFilterDirty(0);// 0 ：默认状态 不过滤脏话 1：过滤脏话
+                         params.setFilterModal(0);// 0 ：默认状态 不过滤语气词  1：过滤部分语气词 2:严格过滤
+                         params.setFilterPunc(0); // 0 ：默认状态 不过滤句末的句号 1：滤句末的句号
+                         params.setConvertNumMode(1);//1：默认状态 根据场景智能转换为阿拉伯数字；0：全部转为中文数字。
+//                    params.setHotwordId(""); // 热词id。用于调用对应的热词表，如果在调用语音识别服务时，不进行单独的热词id设置，自动生效默认热词；如果进行了单独的热词id设置，那么将生效单独设置的热词id。
+                         params.setData(bytes);
+                         params.setVoiceFormat("mp3");//识别音频的音频格式，支持wav、pcm、ogg-opus、speex、silk、mp3、m4a、aac。
+                         params.setSourceType(QCloudSourceType.QCloudSourceTypeData);
+                         params.setEngSerViceType("16k_zh"); //默认16k_zh，更多引擎参数详见https://cloud.tencent.com/document/product/1093/35646 内的EngSerViceType字段
+                         params.setReinforceHotword(1); // 开启热词增强功能
+                         recognizer.recognize(params);
+                     } catch (Exception e) {
+                         e.printStackTrace();
+                     }
                 }
             }
         });
+
+    }
+
+    @Override
+    public void didStartRecord() {
+
+    }
+
+    @Override
+    public void didStopRecord() {
+
+    }
+
+    @Override
+    public void recognizeResult(QCloudOneSentenceRecognizer recognizer, String result, Exception exception) {
+        if (exception != null) {
+
+        }
+        else {
+           sendTextMsg(result);
+        }
+    }
+
+    @Override
+    public void didUpdateVolume(int volumn) {
 
     }
 

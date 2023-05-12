@@ -19,3 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keepclasseswithmembernames class * { # 保持 native 方法不被混淆
+native <methods>;
+}
+-keep public class com.tencent.cloud.qcloudasrsdk.*

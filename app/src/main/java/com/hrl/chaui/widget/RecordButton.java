@@ -59,9 +59,6 @@ public class RecordButton extends android.support.v7.widget.AppCompatButton {
      **/
     private int MAX_INTERVAL_TIME = 1000 * 60;
 
-
-
-
     private static  View view;
 
     private TextView mStateTV;
