@@ -22,8 +22,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.google.gson.Gson;
 import com.hrl.chaui.adapter.ChatAdapter;
 import com.hrl.chaui.bean.MsgType;
+import com.hrl.chaui.bean.RecongnizeBody;
 import com.hrl.chaui.util.LogUtil;
 import com.hrl.chaui.bean.Message;
 import com.hrl.chaui.R;
@@ -59,7 +61,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
-public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, QCloudOneSentenceRecognizerListener {
+public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, QCloudOneSentenceRecognizerListener{
 
     @BindView(R.id.common_toolbar_back)
     RelativeLayout btnBack;
@@ -93,15 +95,14 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
      public static final int       REQUEST_CODE_IMAGE=0000;
      public static final int       REQUEST_CODE_VEDIO=1111;
      public static final int       REQUEST_CODE_FILE=2222;
-    private QCloudOneSentenceRecognizer recognizer;
-
+     private QCloudOneSentenceRecognizer recognizer;
+     Gson gson = new Gson();
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         initContent();
     }
-
 
     private ImageView ivAudio;
 
@@ -165,9 +166,8 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                 finish();
             }
         });
-        if(recognizer == null) {
-            recognizer = new QCloudOneSentenceRecognizer(this,"1303035412","AKIDlYL6h4Ed3KM9g0FRQAfxELCzmR0khUq3","5zkMqCPUOApLpJgr494tYDj2GI8rPmzD");
-        }
+        recognizer = new QCloudOneSentenceRecognizer(this,"1303035412","AKIDlYL6h4Ed3KM9g0FRQAfxELCzmR0khUq3","5zkMqCPUOApLpJgr494tYDj2GI8rPmzD");
+        recognizer.setCallback(this);
     }
     @Override
     public void onRefresh() {
@@ -195,9 +195,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 //          mAdapter.addData(0,mReceiveMsgList);
           mSwipeRefresh.setRefreshing(false);
     }
-
-
-
 
     private void initChatUi(){
         //mBtnAudio
@@ -248,21 +245,13 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                  File file = new File(audioPath);
                  if (file.exists()) {
 //                    sendAudioMessage(audioPath,time);
-
+                     final byte[] buf = new byte[(int) file.length()];;
+                     FileInputStream fis = null;
                      try {
-                         FileInputStream fis = new FileInputStream(file);
-                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                         byte[] buf = new byte[1024];
+                         fis = new FileInputStream(file);
+                         fis.read(buf);
 
-                         try {
-                             for (int readNum; (readNum = fis.read(buf)) != -1;) {
-                                 bos.write(buf, 0, readNum);
-                             }
-                         } catch (IOException ex) {
-                             ex.printStackTrace();
-                         }
 
-                         byte[] bytes = bos.toByteArray();
                          //配置识别参数,详细参数说明见： https://cloud.tencent.com/document/product/1093/35646
                          QCloudOneSentenceRecognitionParams params = (QCloudOneSentenceRecognitionParams)QCloudOneSentenceRecognitionParams.defaultRequestParams();
                          params.setFilterDirty(0);// 0 ：默认状态 不过滤脏话 1：过滤脏话
@@ -270,14 +259,21 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                          params.setFilterPunc(0); // 0 ：默认状态 不过滤句末的句号 1：滤句末的句号
                          params.setConvertNumMode(1);//1：默认状态 根据场景智能转换为阿拉伯数字；0：全部转为中文数字。
 //                    params.setHotwordId(""); // 热词id。用于调用对应的热词表，如果在调用语音识别服务时，不进行单独的热词id设置，自动生效默认热词；如果进行了单独的热词id设置，那么将生效单独设置的热词id。
-                         params.setData(bytes);
-                         params.setVoiceFormat("mp3");//识别音频的音频格式，支持wav、pcm、ogg-opus、speex、silk、mp3、m4a、aac。
+                         params.setData(buf);
+                         params.setVoiceFormat("amr");//识别音频的音频格式，支持wav、pcm、ogg-opus、speex、silk、mp3、m4a、aac。
                          params.setSourceType(QCloudSourceType.QCloudSourceTypeData);
                          params.setEngSerViceType("16k_zh"); //默认16k_zh，更多引擎参数详见https://cloud.tencent.com/document/product/1093/35646 内的EngSerViceType字段
-                         params.setReinforceHotword(1); // 开启热词增强功能
+                         params.setReinforceHotword(0); // 开启热词增强功能
                          recognizer.recognize(params);
+
                      } catch (Exception e) {
                          e.printStackTrace();
+                     } finally {
+                         try {
+                             fis.close();
+                         } catch (IOException e) {
+                             e.printStackTrace();
+                         }
                      }
                 }
             }
@@ -298,10 +294,10 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void recognizeResult(QCloudOneSentenceRecognizer recognizer, String result, Exception exception) {
         if (exception != null) {
-
         }
         else {
-           sendTextMsg(result);
+            RecongnizeBody obj =  (RecongnizeBody) gson.fromJson(result,RecongnizeBody.class);
+            sendTextMsg(obj.getResponse().getResult());
         }
     }
 

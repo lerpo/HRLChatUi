@@ -226,6 +226,10 @@ public class RecordButton extends android.support.v7.widget.AppCompatButton {
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
         mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        mRecorder.setAudioEncodingBitRate(16 * 44100);
+        mRecorder.setAudioSamplingRate(44100);
+        mRecorder.setAudioChannels(1);
+
         File file = new File(mFile);
         LogUtil.d("创建文件的路径:"+mFile);
         LogUtil.d("文件创建成功:"+file.exists());
