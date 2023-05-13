@@ -43,6 +43,9 @@ import com.hrl.chaui.widget.RecordButton;
 import com.hrl.chaui.widget.StateButton;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.entity.LocalMedia;
+import com.okhttplib.HttpInfo;
+import com.okhttplib.OkHttpUtil;
+import com.okhttplib.callback.Callback;
 import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizer;
 import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizerListener;
 import com.tencent.cloud.qcloudasrsdk.onesentence.common.QCloudSourceType;
@@ -90,8 +93,8 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
      @BindView(R.id.swipe_chat)
      SwipeRefreshLayout mSwipeRefresh;//下拉刷新
      private ChatAdapter mAdapter;
-     public static final String 	  mSenderId="right";
-     public static final String     mTargetId="left";
+     public static final String 	mSenderId="right";
+     public static final String    mTargetId="left";
      public static final int       REQUEST_CODE_IMAGE=0000;
      public static final int       REQUEST_CODE_VEDIO=1111;
      public static final int       REQUEST_CODE_FILE=2222;
@@ -166,7 +169,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                 finish();
             }
         });
-        recognizer = new QCloudOneSentenceRecognizer(this,"1303035412","AKIDlYL6h4Ed3KM9g0FRQAfxELCzmR0khUq3","5zkMqCPUOApLpJgr494tYDj2GI8rPmzD");
+        recognizer = new QCloudOneSentenceRecognizer(this,"1303035412","AKIDRipjPr54rQkrkO9g05yd5ILCpDNTL0Qc","Uq57yd7OWTDoFbkgOrrxBBxUpqeIjyym");
         recognizer.setCallback(this);
     }
     @Override
@@ -194,6 +197,24 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 //          mReceiveMsgList.add(mMessgaeFile);
 //          mAdapter.addData(0,mReceiveMsgList);
           mSwipeRefresh.setRefreshing(false);
+    }
+
+    private void getChatList() {
+            OkHttpUtil.getDefault(this).doGetAsync(
+                    HttpInfo.Builder().setUrl("http://www.baidu.com").build(),
+                    new Callback() {
+                        @Override
+                        public void onFailure(HttpInfo info) throws IOException {
+                            String result = info.getRetDetail();
+                        }
+
+                        @Override
+                        public void onSuccess(HttpInfo info) throws IOException {
+                            String result = info.getRetDetail();
+                            //GSon解析
+                            RecongnizeBody time = info.getRetDetail(RecongnizeBody.class);
+                        }
+            });
     }
 
     private void initChatUi(){
