@@ -1,6 +1,7 @@
 package com.hrl.chaui.activity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import com.hrl.chaui.R;
 import com.hrl.chaui.util.LogUtil;
+import com.hrl.chaui.util.SPUtils;
 import com.hrl.chaui.widget.SetPermissionDialog;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
@@ -29,6 +31,7 @@ public class SplashActivity extends AppCompatActivity {
     }
 
 
+    @SuppressLint("CheckResult")
     private void requestPermisson(){
         RxPermissions rxPermission = new RxPermissions(this);
         rxPermission
@@ -39,10 +42,17 @@ public class SplashActivity extends AppCompatActivity {
                         Manifest.permission.RECORD_AUDIO
                 )
                 .subscribe(new Consumer<Boolean>() {
+                    @SuppressLint("CheckResult")
                     @Override
                     public void accept(Boolean aBoolean) throws Exception {
                         if (aBoolean) {
-                            startActivity(new Intent(SplashActivity.this,MainActivity.class));
+                            SPUtils.init(SplashActivity.this,"token");
+                            String token = SPUtils.getString("token","");
+                            if(token.length() > 0) {
+                                startActivity(new Intent(SplashActivity.this,MainActivity.class));
+                            } else {
+                                startActivity(new Intent(SplashActivity.this,LoginActivity.class));
+                            }
                             finish();
                          } else {
 

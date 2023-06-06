@@ -5,11 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -21,11 +19,17 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.gson.Gson;
 import com.hrl.chaui.adapter.ChatAdapter;
+import com.hrl.chaui.bean.ConversationMsgBody;
+import com.hrl.chaui.bean.gpt.GptMessageBody;
 import com.hrl.chaui.bean.MsgType;
 import com.hrl.chaui.bean.RecongnizeBody;
+import com.hrl.chaui.service.ReqCallBack;
+import com.hrl.chaui.service.ReqService;
 import com.hrl.chaui.util.LogUtil;
 import com.hrl.chaui.bean.Message;
 import com.hrl.chaui.R;
@@ -43,15 +47,11 @@ import com.hrl.chaui.widget.RecordButton;
 import com.hrl.chaui.widget.StateButton;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.entity.LocalMedia;
-import com.okhttplib.HttpInfo;
-import com.okhttplib.OkHttpUtil;
-import com.okhttplib.callback.Callback;
 import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizer;
 import com.tencent.cloud.qcloudasrsdk.onesentence.QCloudOneSentenceRecognizerListener;
 import com.tencent.cloud.qcloudasrsdk.onesentence.common.QCloudSourceType;
 import com.tencent.cloud.qcloudasrsdk.onesentence.network.QCloudOneSentenceRecognitionParams;
 //import com.nbsp.materialfilepicker.ui.FilePickerActivity;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -108,6 +108,9 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private ImageView ivAudio;
+    private String conversationId;
+    private String modelId;
+    List<Message>  mReceiveMsgList = new ArrayList<Message>();
 
     protected void initContent() {
         ButterKnife.bind(this) ;
@@ -115,7 +118,10 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
         LinearLayoutManager mLinearLayout=new LinearLayoutManager(this);
         mRvChat.setLayoutManager(mLinearLayout);
         mRvChat.setAdapter(mAdapter);
+        conversationId = getIntent().getStringExtra("sessionId");
+        modelId = getIntent().getStringExtra("modelId");
         mSwipeRefresh.setOnRefreshListener(this);
+        onRefresh();
         initChatUi();
         mAdapter.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {
             @Override
@@ -156,13 +162,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         });
 
-        List<Message>  mReceiveMsgList=new ArrayList<Message>();
-        Message mMessgaeText=getBaseReceiveMessage(MsgType.TEXT);
-        TextMsgBody mTextMsgBody=new TextMsgBody();
-        mTextMsgBody.setMessage("你想要啥绝活,快跟我聊聊吧！！！");
-        mMessgaeText.setBody(mTextMsgBody);
-        mReceiveMsgList.add(mMessgaeText);
-        mAdapter.addData(0,mReceiveMsgList);
+
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -196,25 +196,38 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 //          mMessgaeFile.setBody(mFileMsgBody);
 //          mReceiveMsgList.add(mMessgaeFile);
 //          mAdapter.addData(0,mReceiveMsgList);
-          mSwipeRefresh.setRefreshing(false);
+            mReceiveMsgList.clear();
+            getChatList();
+
     }
 
     private void getChatList() {
-            OkHttpUtil.getDefault(this).doGetAsync(
-                    HttpInfo.Builder().setUrl("http://www.baidu.com").build(),
-                    new Callback() {
-                        @Override
-                        public void onFailure(HttpInfo info) throws IOException {
-                            String result = info.getRetDetail();
-                        }
+        ReqService.getInstance(ChatActivity.this).fetchConversationMsg(this.conversationId, new ReqCallBack<List<ConversationMsgBody>>() {
+            @Override
+            public void onSuccess(List<ConversationMsgBody> result) {
+                for (ConversationMsgBody msg: result) {
+                    Message mMessgaeText;
+                    if(msg.getRole().equals("assistant")) { //gpt
+                        mMessgaeText = getBaseReceiveMessage(MsgType.TEXT);
+                    } else { //me
+                        mMessgaeText = getBaseSendMessage(MsgType.TEXT);
+                    }
+                    TextMsgBody mTextMsgBody=new TextMsgBody();
+                    mTextMsgBody.setMessage(msg.getMessage());
+                    mMessgaeText.setBody(mTextMsgBody);
+                    mMessgaeText.setSentStatus(MsgSendStatus.SENT);
+                    mReceiveMsgList.add(mMessgaeText);
+                }
+                mAdapter.addData(mReceiveMsgList);
+                mSwipeRefresh.setRefreshing(false);
+            }
 
-                        @Override
-                        public void onSuccess(HttpInfo info) throws IOException {
-                            String result = info.getRetDetail();
-                            //GSon解析
-                            RecongnizeBody time = info.getRetDetail(RecongnizeBody.class);
-                        }
-            });
+            @Override
+            public void onFailure(String error) {
+                Toast.makeText(ChatActivity.this,error,Toast.LENGTH_SHORT).show();
+                mSwipeRefresh.setRefreshing(false);
+            }
+        });
     }
 
     private void initChatUi(){
@@ -312,13 +325,51 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
+     String msgId = "";
+     String msg = "";
+     private void sendGptMsg(String result) {
+         msgId = "";
+         msg = "";
+
+         final Message[] msgBody = new Message[1];
+         sendTextMsg(result,false);
+         ReqService.getInstance(ChatActivity.this).sendConversationMsg(modelId, conversationId, result, new ReqCallBack<GptMessageBody>() {
+             @Override
+             public void onSuccess(final GptMessageBody result) {
+                 ChatActivity.this.runOnUiThread(new Runnable() {
+                     @Override
+                     public void run() {
+                         if(msgId.equals("")) {
+                             msgId = result.getId();
+                             msg += result.getChoices().get(0).getDelta().getContent();
+                             msgBody[0] = addReceivedTextMsg(msg,false);
+                         } else {
+
+                             TextMsgBody mTextMsgBody=new TextMsgBody();
+                             msg += result.getChoices().get(0).getDelta().getContent();
+                             mTextMsgBody.setMessage(msg);
+                             msgBody[0].setBody(mTextMsgBody);
+                             updateMsgNoDelay(msgBody[0]);
+                         }
+                     }
+                 });
+
+
+             }
+
+             @Override
+             public void onFailure(String error) {
+
+             }
+         });
+     }
     @Override
     public void recognizeResult(QCloudOneSentenceRecognizer recognizer, String result, Exception exception) {
         if (exception != null) {
         }
         else {
             RecongnizeBody obj =  (RecongnizeBody) gson.fromJson(result,RecongnizeBody.class);
-            sendTextMsg(obj.getResponse().getResult());
+            sendGptMsg(obj.getResponse().getResult());
         }
     }
 
@@ -331,7 +382,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.btn_send:
-                sendTextMsg(mEtContent.getText().toString());
+                sendGptMsg(mEtContent.getText().toString());
                 mEtContent.setText("");
                 break;
             case R.id.rlPhoto:
@@ -381,14 +432,35 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     //文本消息
-    private void sendTextMsg(String hello)  {
+    private void sendTextMsg(String msg,Boolean isDelay)  {
         final Message mMessgae=getBaseSendMessage(MsgType.TEXT);
         TextMsgBody mTextMsgBody=new TextMsgBody();
-        mTextMsgBody.setMessage(hello);
+        mTextMsgBody.setMessage(msg);
         mMessgae.setBody(mTextMsgBody);
         //开始发送
         mAdapter.addData( mMessgae);
-        updateMsg(mMessgae);
+        if(isDelay) {
+            updateMsg(mMessgae);
+        } else {
+            updateMsgNoDelay(mMessgae);
+        }
+    }
+
+    //文本消息
+    private Message addReceivedTextMsg(String msg,Boolean isDelay)  {
+        final Message mMessgae = getBaseReceiveMessage(MsgType.TEXT);
+        TextMsgBody mTextMsgBody=new TextMsgBody();
+        mTextMsgBody.setMessage(msg);
+        mMessgae.setBody(mTextMsgBody);
+        //开始发送
+        mAdapter.addData( mMessgae);
+        if(isDelay) {
+            updateMsg(mMessgae);
+        } else {
+            updateMsgNoDelay(mMessgae);
+        }
+        return mMessgae;
+
     }
 
 
@@ -512,6 +584,18 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
-
-
+    private void updateMsgNoDelay(final Message mMessgae) {
+        mRvChat.scrollToPosition(mAdapter.getItemCount() - 1);
+        //模拟2秒后发送成功
+                int position=0;
+                mMessgae.setSentStatus(MsgSendStatus.SENT);
+                //更新单个子条目
+                for (int i=0;i<mAdapter.getData().size();i++){
+                    Message mAdapterMessage=mAdapter.getData().get(i);
+                    if (mMessgae.getUuid().equals(mAdapterMessage.getUuid())){
+                        position=i;
+                    }
+                }
+                mAdapter.notifyItemChanged(position);
+       }
 }

@@ -33,7 +33,7 @@ public class MyApplication extends Application {
                 .setDownloadFileDir(downloadFileDir)//文件下载保存目录
                 .setResponseEncoding(Encoding.UTF_8)//设置全局的服务器响应编码
                 .setRequestEncoding(Encoding.UTF_8)//设置全局的请求参数编码
-                .setHttpsCertificate("12306.cer")//设置全局Https证书
+//                .setHttpsCertificate("12306.cer")//设置全局Https证书
                 .build();
     }
 }

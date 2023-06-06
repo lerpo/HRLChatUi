@@ -1,6 +1,4 @@
 apply plugin: 'com.android.application'
-
-
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -17,7 +15,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
 }
 
 dependencies {
@@ -39,5 +36,6 @@ dependencies {
     implementation ('com.zhousf.lib:okhttp3:2.9.9'){
         exclude(module: 'support-annotations')
     }
+    implementation('com.squareup.okhttp3:okhttp-sse:3.11.0')
 
 }
