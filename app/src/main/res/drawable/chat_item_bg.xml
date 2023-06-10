@@ -3,18 +3,18 @@
     <item android:state_pressed="true">
         <shape>
             <gradient
-                android:endColor="#56C5F9"
-                android:centerColor="#1CC5FA"
-                android:startColor="#16A3EB" />
+                android:endColor="@color/white"
+                android:centerColor="@color/white"
+                android:startColor="@color/white" />
             <corners android:radius="16dp"/>
         </shape>
     </item>
     <item android:state_pressed="false">
         <shape>
             <gradient
-                android:endColor="#56C5F9"
-                android:centerColor="#1CC5FA"
-                android:startColor="#16A3EB" />
+                android:endColor="@color/white"
+                android:centerColor="@color/white"
+                android:startColor="@color/white" />
             <corners android:radius="16dp"/>
         </shape>
     </item>

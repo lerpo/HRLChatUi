@@ -5,13 +5,14 @@
       <map>
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/drawable/chat_item_bg.xml" value="0.1421875" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
+        <entry key="..\:/workspace/HRLChatUi/app/src/main/res/drawable/message_shap_chat_bg.xml" value="0.23958333333333334" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/drawable/shape_btn_bg.xml" value="0.1421875" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/activity_chat.xml" value="0.16927083333333334" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/activity_login.xml" value="0.2" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/activity_main.xml" value="0.264" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/activity_splash.xml" value="0.264" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/common_titlebar.xml" value="0.264" />
-        <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/item_conversation.xml" value="0.12708333333333333" />
+        <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/item_conversation.xml" value="0.264" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/item_image_send.xml" value="0.12135416666666667" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/layout/item_text_receive.xml" value="0.12135416666666667" />
         <entry key="..\:/workspace/HRLChatUi/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1" />

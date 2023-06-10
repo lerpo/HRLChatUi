@@ -110,7 +110,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
     private ImageView ivAudio;
     private String conversationId;
     private String modelId;
-    List<Message>  mReceiveMsgList = new ArrayList<Message>();
+
 
     protected void initContent() {
         ButterKnife.bind(this) ;
@@ -196,8 +196,10 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
 //          mMessgaeFile.setBody(mFileMsgBody);
 //          mReceiveMsgList.add(mMessgaeFile);
 //          mAdapter.addData(0,mReceiveMsgList);
-            mReceiveMsgList.clear();
-            getChatList();
+        for(int i = 0; i< mAdapter.getItemCount(); i++) {
+            mAdapter.remove(i);
+        }
+        getChatList();
 
     }
 
@@ -205,6 +207,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
         ReqService.getInstance(ChatActivity.this).fetchConversationMsg(this.conversationId, new ReqCallBack<List<ConversationMsgBody>>() {
             @Override
             public void onSuccess(List<ConversationMsgBody> result) {
+                List<Message>  mReceiveMsgList = new ArrayList<Message>();
                 for (ConversationMsgBody msg: result) {
                     Message mMessgaeText;
                     if(msg.getRole().equals("assistant")) { //gpt
@@ -219,6 +222,7 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                     mReceiveMsgList.add(mMessgaeText);
                 }
                 mAdapter.addData(mReceiveMsgList);
+                mRvChat.scrollToPosition(mAdapter.getItemCount() - 1);
                 mSwipeRefresh.setRefreshing(false);
             }
 

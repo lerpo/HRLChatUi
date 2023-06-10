@@ -8,22 +8,4 @@
     android:background="@mipmap/ic_splash_bg"
     android:orientation="vertical">
 
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="嗨!"
-
-        android:textColor="@color/color_orange"
-        android:textSize="48sp" />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="            Chat"
-        android:textColor="@color/color_orange"
-        android:textSize="24sp" />
-
-
 </LinearLayout>
