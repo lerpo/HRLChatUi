@@ -1,11 +1,12 @@
 package com.hrl.chaui.service;
 
-import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.hrl.chaui.activity.ChatActivity;
+import com.hrl.chaui.activity.LoginActivity;
 import com.hrl.chaui.bean.ConversationListBody;
 import com.hrl.chaui.bean.ConversationMsgBody;
 import com.hrl.chaui.bean.gpt.GptMessageBody;
@@ -30,6 +31,11 @@ import okhttp3.internal.sse.RealEventSource;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
 
+interface BaseCallBack {
+    void onSuccess(ReqResultBody info);
+    void onFailure(HttpInfo info);
+
+}
 
 public class ReqService {
 
@@ -38,10 +44,13 @@ public class ReqService {
     private String requesturl = "http://aigc.ezrpro.work/api";
     private Context mContext;
     private Gson gson = new Gson();
-    private ReqService() {}
+
+    private ReqService() {
+    }
+
     public static ReqService getInstance(Context context) {
         if (instance == null) {
-            synchronized(ReqService.class) {
+            synchronized (ReqService.class) {
                 if (instance == null) {
                     instance = new ReqService();
                     instance.mContext = context;
@@ -51,125 +60,175 @@ public class ReqService {
         return instance;
     }
 
+    private void request(Map params, String url, String method, final BaseCallBack callBack) {
+        HttpInfo.Builder builder = HttpInfo.Builder();
+        if (getToken().length() > 0) {
+            builder.addHead("token", getToken());
+        }
+        if (method.equals("get")) {
+            if (params != null) {
+                builder.addParams(params);
+            }
+            builder.setUrl(requesturl + url);
+            OkHttpUtil.getDefault(this).doGetAsync(
+                    builder.build(),
+                    new Callback() {
+                        @Override
+                        public void onSuccess(HttpInfo httpInfo) throws IOException {
+                            String result = httpInfo.getRetDetail();
+                            ReqResultBody resultBody = GsonUtils.stringToObject(result, ReqResultBody.class);
+                            if (resultBody.getCode() == 40001) {
+                                Toast.makeText(mContext,resultBody.getMessage(),Toast.LENGTH_SHORT).show();
+                                mContext.startActivity(new Intent(mContext, LoginActivity.class));
+                            } else if(resultBody.getCode() == 200) {
+                                callBack.onSuccess(resultBody);
+                            } else {
+                                Toast.makeText(mContext,resultBody.getMessage(),Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(HttpInfo httpInfo) throws IOException {
+                           callBack.onFailure(httpInfo);
+                        }
+                    });
+
+        } else if (method.equals("post")) {
+            if (params != null) {
+                builder.addParamJson(GsonUtils.objectToJsonString(params));
+            }
+            builder.setUrl(requesturl + url);
+            OkHttpUtil.getDefault(this).doPostAsync(
+                    builder.build(),
+                    new Callback() {
+                        @Override
+                        public void onSuccess(HttpInfo httpInfo) throws IOException {
+                            String result = httpInfo.getRetDetail();
+                            ReqResultBody resultBody = GsonUtils.stringToObject(result, ReqResultBody.class);
+                            callBack.onSuccess(resultBody);
+                        }
+
+                        @Override
+                        public void onFailure(HttpInfo httpInfo) throws IOException {
+                            callBack.onFailure(httpInfo);
+                        }
+                    });
+
+
+        }
+
+    }
 
     /**
      * 获取验证码
      */
     public void sendCodeMsg(String mobile, final ReqCallBack callback) {
-        OkHttpUtil.getDefault(this).doGetAsync(
-                HttpInfo.Builder().setUrl(requesturl+ "/user/login/captcha")
-                        .addParam("mobile",mobile)
-                        .build(),
-                new Callback() {
-                    @Override
-                    public void onFailure(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        callback.onFailure(result);
-                    }
+        Map param = new HashMap();
+        param.put("mobile", mobile);
+        request(param, "/user/login/captcha", "get", new BaseCallBack() {
+            @Override
+            public void onSuccess(ReqResultBody info)  {
+                String result = info.getData();
+                callback.onFailure(result);
+            }
 
-                    @Override
-                    public void onSuccess(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        callback.onSuccess(result);
-                    }
-                });
+            @Override
+            public void onFailure(HttpInfo info)  {
+                String result = info.getRetDetail();
+                callback.onSuccess(result);
+            }
+        });
+
     }
 
     /**
      * 登录
      */
     public void login(String mobile, String code, final ReqCallBack callback) {
-        Map<String,String> param = new HashMap<String,String>();
-        param.put("mobile",mobile);
-        param.put("captcha",code);
-        OkHttpUtil.getDefault(this).doPostAsync(
-                HttpInfo.Builder().setUrl(requesturl+ "/user/login")
-                        .addParamJson(GsonUtils.objectToJsonString(param))//添加Json参数
-                        .build(),
-                new Callback() {
-                    @Override
-                    public void onFailure(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        callback.onFailure(result);
-                    }
 
-                    @Override
-                    public void onSuccess(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        ReqResultBody resultBody = GsonUtils.stringToObject(result, ReqResultBody.class);
-                        if(resultBody.getCode() == 200) {
-                            LoginInfo loginInfo = GsonUtils.stringToObject(resultBody.getData(),LoginInfo.class);
-                            callback.onSuccess(loginInfo);
-                        } else {
-                            callback.onFailure(resultBody.getMessage());
-                        }
-                    }
-                });
+        Map<String, String> param = new HashMap<String, String>();
+        param.put("mobile", mobile);
+        param.put("captcha", code);
+        request(param, "/user/login", "post", new BaseCallBack() {
+            @Override
+            public void onSuccess(ReqResultBody info)  {
+
+                if (info.getCode() == 200) {
+                    LoginInfo loginInfo = GsonUtils.stringToObject(info.getData(), LoginInfo.class);
+                    callback.onSuccess(loginInfo);
+                } else {
+                    callback.onFailure(info.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(HttpInfo info) {
+                String result = info.getRetDetail();
+                callback.onFailure(result);
+            }
+        });
+
     }
+
     /**
      * 获取会话列表
      */
     public void getConversationList(final ReqCallBack callback) {
-        OkHttpUtil.getDefault(this).doGetAsync(
-                HttpInfo.Builder().setUrl(requesturl+ "/openai/chat/conversation")
-                        .addHead("token", getToken())
-                        .build(),
-                new Callback() {
-                    @Override
-                    public void onFailure(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                    }
 
-                    @Override
-                    public void onSuccess(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        ReqResultBody resultBody = GsonUtils.stringToObject(result, ReqResultBody.class);
-                        if(resultBody.getCode() == 200) {
-                            List<ConversationListBody> conversationList = gson.fromJson(resultBody.getData(), new TypeToken<List<ConversationListBody>>() {
-                            }.getType());
-                            callback.onSuccess(conversationList);
-                        } else {
-                            callback.onFailure(resultBody.getMessage());
-                        }
-                    }
+
+        request(null, "/openai/chat/conversation", "get", new BaseCallBack() {
+            @Override
+            public void onSuccess(ReqResultBody info) {
+
+                if (info.getCode() == 200) {
+                    List<ConversationListBody> conversationList = gson.fromJson(info.getData(), new TypeToken<List<ConversationListBody>>() {
+                    }.getType());
+                    callback.onSuccess(conversationList);
+                } else {
+                    callback.onFailure(info.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(HttpInfo info) {
+                String result = info.getRetDetail();
+            }
         });
     }
 
 
     public void fetchConversationMsg(String conversationId, final ReqCallBack callback) {
-        OkHttpUtil.getDefault(this).doGetAsync(
-                HttpInfo.Builder().setUrl( requesturl+ "/openai/chat/conversation/messages")
-                        .addHead("token", getToken())
-                        .addParam("id",conversationId)
-                        .build(),
-                new Callback() {
-                    @Override
-                    public void onFailure(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                    }
 
-                    @Override
-                    public void onSuccess(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                        ReqResultBody resultBody = GsonUtils.stringToObject(result, ReqResultBody.class);
-                        if(resultBody.getCode() == 200) {
-                            List<ConversationMsgBody> conversationList = gson.fromJson(resultBody.getData(), new TypeToken<List<ConversationMsgBody>>() {
-                            }.getType());
-                            callback.onSuccess(conversationList);
-                        } else {
-                            callback.onFailure(resultBody.getMessage());
-                        }
-                    }
-                });
+        Map<String, String> param = new HashMap<String, String>();
+        param.put("id", conversationId);
+        request(param, "/openai/chat/conversation/messages", "get", new BaseCallBack() {
+            @Override
+            public void onSuccess(ReqResultBody info) {
+
+                if (info.getCode() == 200) {
+                    List<ConversationMsgBody> conversationList = gson.fromJson(info.getData(), new TypeToken<List<ConversationMsgBody>>() {
+                    }.getType());
+                    callback.onSuccess(conversationList);
+                } else {
+                    callback.onFailure(info.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(HttpInfo info) {
+                String result = info.getRetDetail();
+            }
+        });
+
     }
 
-    public void sendConversationMsg(String modelId, String conversationId, String title,final ReqCallBack callback) {
+    public void sendConversationMsg(String modelId, String conversationId, String title, final ReqCallBack callback) {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.DAYS)
                 .readTimeout(10, TimeUnit.DAYS)//这边需要将超时显示设置长一点，不然刚连上就断开，之前以为调用方式错误被坑了半天
                 .build();
 
-        Request request = new Request.Builder().url(requesturl+ "/openai/chat/conversation/send_message?modelId="+modelId+"&conversationId="+conversationId+"&message="+title)
+        Request request = new Request.Builder().url(requesturl + "/openai/chat/conversation/send_message?modelId=" + modelId + "&conversationId=" + conversationId + "&message=" + title)
                 .addHeader("token", getToken())
                 .addHeader("Accept", "text/event-stream")
                 .build();
@@ -193,9 +252,13 @@ public class ReqService {
             @Override
             public void onEvent(EventSource eventSource, String id, String type, String data) {
                 printEvent("onEvent");
-                System.out.println("xxx:"+data);//请求到的数据
+                System.out.println("xxx:" + data);//请求到的数据
                 GptMessageBody messageBody = GsonUtils.stringToObject(data, GptMessageBody.class);
-                callback.onSuccess(messageBody);
+                if(messageBody.getId() != null) {
+                    callback.onSuccess(messageBody);
+                } else {
+                    callback.onFailure("已超过最大会话条数，请新建一个会话");
+                }
             }
 
             @Override
@@ -212,24 +275,24 @@ public class ReqService {
 
     }
 
-    public void createConversation() {
-        OkHttpUtil.getDefault(this).doGetAsync(
-                HttpInfo.Builder().setUrl( requesturl+"/openai/chat/create_conversation").build(),
-                new Callback() {
-                    @Override
-                    public void onFailure(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                    }
+    public void createConversation(final ReqCallBack callback) {
 
-                    @Override
-                    public void onSuccess(HttpInfo info) throws IOException {
-                        String result = info.getRetDetail();
-                    }
+        request(null, "/openai/chat/create_conversation", "get", new BaseCallBack() {
+            @Override
+            public void onSuccess(ReqResultBody info)  {
+                String result = info.getData();
+            }
+
+            @Override
+            public void onFailure(HttpInfo info) {
+                String result = info.getRetDetail();
+            }
         });
     }
-    private String getToken(){
-        SPUtils.init(this.mContext,"token");
-        String token = SPUtils.getString("token","");
+
+    private String getToken() {
+        SPUtils.init(this.mContext, "token");
+        String token = SPUtils.getString("token", "");
         return token;
     }
 }

@@ -10,9 +10,10 @@
     android:orientation="horizontal"
     android:padding="15dp">
     <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@mipmap/login_title_bg"/>
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginRight="10px"
+        android:src="@drawable/talk_icon"/>
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -29,7 +30,9 @@
             android:text="AI 聊天"
             android:textColor="@color/bar_grey"
             android:textSize="15sp"
-            android:textStyle="bold" />
+            android:maxLines="1"
+            android:ellipsize="end"
+             />
 
         <TextView
             android:id="@+id/time"

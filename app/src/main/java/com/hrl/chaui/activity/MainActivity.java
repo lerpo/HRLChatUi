@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         btnBack.setVisibility(View.GONE);
-        pageTitle.setText("嗨！Chat");
+        pageTitle.setText("AI 助手");
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ConversationAdapter(this);
         recyclerView.setAdapter(adapter);

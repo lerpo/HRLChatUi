@@ -334,7 +334,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
      private void sendGptMsg(String result) {
          msgId = "";
          msg = "";
-
          final Message[] msgBody = new Message[1];
          sendTextMsg(result,false);
          ReqService.getInstance(ChatActivity.this).sendConversationMsg(modelId, conversationId, result, new ReqCallBack<GptMessageBody>() {
@@ -348,7 +347,6 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                              msg += result.getChoices().get(0).getDelta().getContent();
                              msgBody[0] = addReceivedTextMsg(msg,false);
                          } else {
-
                              TextMsgBody mTextMsgBody=new TextMsgBody();
                              msg += result.getChoices().get(0).getDelta().getContent();
                              mTextMsgBody.setMessage(msg);
@@ -357,12 +355,15 @@ public class ChatActivity extends AppCompatActivity implements SwipeRefreshLayou
                          }
                      }
                  });
-
-
              }
-
              @Override
              public void onFailure(String error) {
+                 ChatActivity.this.runOnUiThread(new Runnable() {
+                     @Override
+                     public void run() {
+                         Toast.makeText(ChatActivity.this,"已超过最大会话条数，请新建一个会话",Toast.LENGTH_LONG).show();
+                     }
+                 });
 
              }
          });
